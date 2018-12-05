@@ -172,7 +172,7 @@ public class MetadataManager {
      * @param bitmap The new artwork
      */
     protected void updateArtwork(Bitmap bitmap) {
-        Track track = manager.getPlayback().getCurrentTrack();
+        Track track = manager.getPlayback().get(getPlayerId()).getCurrentTrack();
         if(track == null) return;
 
         MediaMetadataCompat.Builder metadata = track.toMediaMetadata();
@@ -220,9 +220,11 @@ public class MetadataManager {
 
     /**
      * Updates the playback state
-     * @param playback The player
+     * @param playbacks List of players
      */
-    public void updatePlayback(ExoPlayback playback) {
+    public void updatePlayback(List<ExoPlayback> playbacks) {
+        ExoPlayback playback = playbacks.get(getPlayerId());
+
         int state = playback.getState();
         boolean playing = Utils.isPlaying(state);
         MediaStyle style = new MediaStyle();
@@ -296,7 +298,7 @@ public class MetadataManager {
     }
 
     private void updateNotification() {
-        int state = manager.getPlayback().getState();
+        int state = manager.getPlayback().get(getPlayerId()).getState();
         if (Utils.isStopped(state)) {
             removeNotifications();
             return;
@@ -335,6 +337,12 @@ public class MetadataManager {
 
         if((compactActions & id) != 0) compact.add(builder.mActions.size());
         builder.mActions.add(action);
+    }
+
+    private int getPlayerId() {
+        // Only allow 1st player to manage notifications.
+        // TODO: Need to make this an API. Allow user to control which player should be responsible for displaying notifications.
+        return 0;
     }
 
 }

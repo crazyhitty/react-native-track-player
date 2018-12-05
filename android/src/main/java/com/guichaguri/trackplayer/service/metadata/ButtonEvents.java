@@ -39,7 +39,9 @@ public class ButtonEvents extends MediaSessionCompat.Callback {
 
     @Override
     public void onSkipToQueueItem(long id) {
-        for(Track track : manager.getPlayback().getQueue()) {
+        // Only allow 1st player to manage buttons.
+        // TODO: Need to make this an API. Allow user to control which player should be responsible for managing buttons.
+        for(Track track : manager.getPlayback().get(0).getQueue()) {
             if(track.queueId != id) continue;
 
             Bundle bundle = new Bundle();

@@ -41,6 +41,8 @@ public class ExoPlayback implements EventListener {
     private final SimpleCache cache;
     private final long cacheMaxSize;
 
+    private final int playerId;
+
     private ConcatenatingMediaSource source;
     private List<Track> queue = Collections.synchronizedList(new ArrayList<>());
 
@@ -49,11 +51,12 @@ public class ExoPlayback implements EventListener {
     private long lastKnownPosition = C.POSITION_UNSET;
     private int previousState = PlaybackStateCompat.STATE_NONE;
 
-    public ExoPlayback(Context context, MusicManager manager, SimpleExoPlayer player, long maxCacheSize) {
+    public ExoPlayback(Context context, MusicManager manager, SimpleExoPlayer player, long maxCacheSize, int playerId) {
         this.context = context;
         this.manager = manager;
         this.player = player;
         this.cacheMaxSize = maxCacheSize;
+        this.playerId = playerId;
 
         if(cacheMaxSize > 0) {
             File cacheDir = new File(context.getCacheDir(), "TrackPlayer");
@@ -75,7 +78,7 @@ public class ExoPlayback implements EventListener {
         lastKnownWindow = C.INDEX_UNSET;
         lastKnownPosition = C.POSITION_UNSET;
 
-        manager.onReset();
+        manager.onReset(playerId);
     }
 
     public DataSource.Factory enableCaching(DataSource.Factory ds) {
@@ -294,7 +297,7 @@ public class ExoPlayback implements EventListener {
                 if(duration != C.TIME_UNSET) lastKnownPosition = duration;
             }
 
-            manager.onTrackUpdate(previous, lastKnownPosition, next);
+            manager.onTrackUpdate(playerId, previous, lastKnownPosition, next);
         }
 
         lastKnownWindow = player.getCurrentWindowIndex();
@@ -317,19 +320,19 @@ public class ExoPlayback implements EventListener {
 
         if(state != previousState) {
             if(Utils.isPlaying(state) && !Utils.isPlaying(previousState)) {
-                manager.onPlay();
+                manager.onPlay(playerId);
             } else if(Utils.isPaused(state) && !Utils.isPaused(previousState)) {
-                manager.onPause();
+                manager.onPause(playerId);
             } else if(Utils.isStopped(state) && !Utils.isStopped(previousState)) {
-                manager.onStop();
+                manager.onStop(playerId);
             }
 
-            manager.onStateChange(state);
+            manager.onStateChange(playerId, state);
             previousState = state;
+        }
 
-            if(state == PlaybackStateCompat.STATE_STOPPED) {
-                manager.onEnd(getCurrentTrack(), getPosition());
-            }
+        if (player.getPlaybackState() == Player.STATE_ENDED) {
+            manager.onEnd(playerId, getCurrentTrack(), getPosition());
         }
     }
 
@@ -345,7 +348,7 @@ public class ExoPlayback implements EventListener {
 
     @Override
     public void onPlayerError(ExoPlaybackException error) {
-        manager.onError("exoplayer", error.getCause().getMessage());
+        manager.onError(playerId, "exoplayer", error.getCause().getMessage());
     }
 
     @Override

@@ -6,6 +6,8 @@ import android.os.Handler;
 import com.facebook.react.bridge.Promise;
 import com.guichaguri.trackplayer.service.player.ExoPlayback;
 
+import java.util.List;
+
 /**
  * @author Guichaguri
  */
@@ -25,8 +27,8 @@ public class MusicBinder extends Binder {
         this.handler.post(r);
     }
 
-    public ExoPlayback getPlayback() {
-        ExoPlayback playback = manager.getPlayback();
+    public List<ExoPlayback> getPlayback() {
+        List<ExoPlayback> playback = manager.getPlayback();
 
         // TODO remove?
         if(playback == null) {
